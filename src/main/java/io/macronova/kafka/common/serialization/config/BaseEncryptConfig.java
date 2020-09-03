@@ -17,7 +17,7 @@ package io.macronova.kafka.common.serialization.config;
 
 import java.util.Map;
 
-import javax.xml.bind.DatatypeConverter;
+import java.util.Base64;
 
 import org.apache.kafka.common.config.AbstractConfig;
 import org.apache.kafka.common.config.ConfigDef;
@@ -93,7 +93,7 @@ public abstract class BaseEncryptConfig extends AbstractConfig {
 	public byte[] getSecret() {
 		final Password secret = getPassword( SECRET_CONFIG );
 		if ( secret != null ) {
-			return DatatypeConverter.parseHexBinary( secret.value() );
+			return Base64.getDecoder().decode( secret.value() );
 		}
 		return null;
 	}
