@@ -40,19 +40,23 @@ import org.apache.kafka.common.KafkaException;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
+import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.ProducerFactory;
-import org.springframework.kafka.test.rule.KafkaEmbedded;
+import org.springframework.kafka.test.EmbeddedKafkaBroker;
+
 import org.springframework.kafka.test.utils.KafkaTestUtils;
 
 public class SerDeIntegrationTest extends BaseTestCase {
-	private KafkaEmbedded embeddedKafka = null;
+	private EmbeddedKafkaBroker embeddedKafka;
 
 	@Before
 	public void setUp() {
-		embeddedKafka = KafkaEmbeddedHolder.getKafkaEmbedded();
+
+		embeddedKafka = KafkaEmbeddedHolder.getEmbeddedKafka().getEmbeddedKafka();
+
 	}
 
 	@After
@@ -101,8 +105,8 @@ public class SerDeIntegrationTest extends BaseTestCase {
 			put( "1.deserializer", StringDeserializer.class.getName() );
 		} };
 		final ConsumerRecords<Integer, String> records = consumeRecords( consumerProps );
-
-		Assert.assertEquals( 1, records.count() );
+        Thread.sleep(1000);
+		Assert.assertEquals( 1, records.count());
 		Assert.assertEquals( message, records.iterator().next().value() );
 	}
 
@@ -272,18 +276,23 @@ public class SerDeIntegrationTest extends BaseTestCase {
 		produceRecords( producerConfig, "Hello, World!" );
 
 		final Map<String, Object> consumerProps = KafkaTestUtils.consumerProps( "test-group", "true", embeddedKafka );
+
 		consumerProps.put( ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest" );
 		consumerProps.putAll( consumerConfig );
+
 		final ConsumerFactory<Integer, String> cf = new DefaultKafkaConsumerFactory<>( consumerProps );
+
 		Consumer<Integer, String> consumer = cf.createConsumer();
-		embeddedKafka.consumeFromAnEmbeddedTopic( consumer, KafkaEmbeddedHolder.topicName() );
+
 		try {
+		   embeddedKafka.consumeFromAnEmbeddedTopic( consumer, KafkaEmbeddedHolder.topicName() );
+
 			KafkaTestUtils.getRecords( consumer, 100 );
 			Assert.fail( "Expected issue while decrypting data." );
 		}
 		catch (KafkaException e) {
 			// Expected.
-			Assert.assertTrue( e.getCause().getMessage().startsWith( "Failed to decrypt content: Unexpected end of encrypted content." ) );
+			Assert.assertTrue( e.getCause().getMessage().startsWith("Failed to decrypt content: Unexpected end of encrypted content" ) );
 		}
 		catch (Exception e) {
 			Assert.fail( "Expected issue while decrypting data." );
@@ -314,7 +323,7 @@ public class SerDeIntegrationTest extends BaseTestCase {
 						throw new RuntimeException( e );
 					}
 				}
-			}, 5000L, "Did not consume expected records."
+			}, 20000L, "Did not consume expected records."
 		);
 		Assert.assertEquals( message, consumedMessage.toString() );
 	}
@@ -349,7 +358,7 @@ public class SerDeIntegrationTest extends BaseTestCase {
 			final ConsumerFactory<K, V> cf = new DefaultKafkaConsumerFactory<>( consumerProps );
 			consumer = cf.createConsumer();
 			embeddedKafka.consumeFromAnEmbeddedTopic( consumer, KafkaEmbeddedHolder.topicName() );
-			return KafkaTestUtils.getRecords( consumer, 500 );
+			return KafkaTestUtils.getRecords( consumer, 10000 );
 		}
 		finally {
 			if ( consumer != null ) {

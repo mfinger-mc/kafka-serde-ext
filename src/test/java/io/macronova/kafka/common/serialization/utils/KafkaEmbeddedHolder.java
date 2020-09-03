@@ -16,46 +16,57 @@
 package io.macronova.kafka.common.serialization.utils;
 
 import kafka.common.KafkaException;
-import org.springframework.kafka.test.rule.KafkaEmbedded;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.kafka.annotation.EnableKafka;
+import org.springframework.kafka.test.EmbeddedKafkaBroker;
+import org.springframework.kafka.test.context.EmbeddedKafka;
+import org.springframework.kafka.test.rule.EmbeddedKafkaRule;
+
 
 public class KafkaEmbeddedHolder {
-	private static KafkaEmbedded kafkaEmbedded = null;
+	private static EmbeddedKafkaRule embeddedKafka;
 	private static boolean started = false;
 	private static int topicId = 0;
 	private static String topicPrefix = "topic";
 
-	public static KafkaEmbedded getKafkaEmbedded() {
-		if ( ! started ) {
-			try {
-				// Every integration test will work on separate Kafka topic.
-				++topicId;
-				kafkaEmbedded = new KafkaEmbedded( 1, false, topicName() );
-				kafkaEmbedded.setKafkaPorts( 9092 );
-				kafkaEmbedded.before();
-			}
-			catch ( Exception e ) {
-				throw new KafkaException( e );
-			}
-			started = true;
-		}
-		return kafkaEmbedded;
-	}
+	 public static EmbeddedKafkaRule getEmbeddedKafka() {
+        if (!started) {
+            try {
+
+            	embeddedKafka = new EmbeddedKafkaRule(1, true).kafkaPorts(9092);
+
+                embeddedKafka.before();
+                ++topicId;
+                embeddedKafka.getEmbeddedKafka().addTopics(topicName());
+            }
+            catch (Exception e) {
+            	System.out.println("**************"+e);
+                throw new KafkaException(e);
+            }
+            started = true;
+        }
+        System.out.println("***************"+embeddedKafka.toString());
+        return embeddedKafka;
+    }
+
 
 	public static void destroy() {
 		if ( started ) {
 			try {
-				kafkaEmbedded.destroy();
+				embeddedKafka.getEmbeddedKafka().destroy();
 			}
 			catch ( Exception e ) {
 				// Ignore.
 			}
-			kafkaEmbedded = null;
+			embeddedKafka = null;
 			started = false;
 		}
 	}
 
 	public static String topicName() {
-		return topicPrefix + topicId;
+
+
+	 	return topicPrefix + topicId;
 	}
 
 	private KafkaEmbeddedHolder() {

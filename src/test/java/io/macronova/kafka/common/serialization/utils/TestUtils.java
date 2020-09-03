@@ -26,7 +26,7 @@ import javax.crypto.Cipher;
 import javax.crypto.CipherInputStream;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-import javax.xml.bind.DatatypeConverter;
+import java.util.Base64;
 
 public abstract class TestUtils {
 	public static byte[] reverse(byte[] data) {
@@ -41,7 +41,7 @@ public abstract class TestUtils {
 	public static byte[] decrypt(byte[] data, byte[] iv, String secret, String transformation) throws Exception {
 		final Cipher cipher = Cipher.getInstance( transformation );
 		final SecretKeySpec keySpec = new SecretKeySpec(
-				DatatypeConverter.parseHexBinary( secret ), EncryptionHelper.extractAlgorithm( transformation )
+				Base64.getDecoder().decode( secret ), EncryptionHelper.extractAlgorithm( transformation )
 		);
 		if ( iv != null ) {
 			cipher.init( Cipher.DECRYPT_MODE, keySpec, new IvParameterSpec( iv ) );
@@ -91,7 +91,7 @@ public abstract class TestUtils {
 		final long startTime = System.currentTimeMillis();
 		boolean testConditionMet = false;
 		while ( !( testConditionMet = testCondition.conditionMet() ) && ( ( System.currentTimeMillis() - startTime ) < maxWaitMs ) ) {
-			Thread.sleep( Math.min( maxWaitMs, 100L ) );
+			Thread.sleep( Math.min( maxWaitMs, 200L ) );
 		}
 		if ( ! testConditionMet ) {
 			conditionDetails = conditionDetails != null ? conditionDetails : "";
