@@ -2,7 +2,7 @@
 *~
 
 # Gradle work directory
-.gradle
+/.gradle
 
 # Build output directies
 /build
