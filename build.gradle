@@ -118,7 +118,7 @@ task zip(type: Zip) {
 }
 
 wrapper {
-	gradleVersion = '6.6'
+	gradleVersion = '6.5.1'
 }
 
 idea {
